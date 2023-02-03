@@ -10,6 +10,7 @@ from PIL import Image
 
 class IntentSceneDataset(Dataset):
     def __init__(self, dataset_directory: str = r"E:\famous_datasets\nirscene1", transform=transforms.Compose([transforms.ToTensor(), lambda x: 2.0 * x - 1]), train_data_percent:float = .80, test_data:bool = False):
+        self.name = 'intelscence'
         label = -1
         self.label_list = []
         self.dataset_directory = dataset_directory
@@ -35,6 +36,10 @@ class IntentSceneDataset(Dataset):
 
         self.number_of_modalities = 2
         self.number_of_classes = 9
+        self.image_channel:tuple = (3,1)
+        self.image_height:int =  679
+        self.image_width:int =  1024
+
 
 
 

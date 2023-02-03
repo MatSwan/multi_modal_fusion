@@ -7,25 +7,39 @@ from torch.nn import ModuleList
 from torch.optim import Optimizer
 
 from base_experiment_classes.BaseExperiment import BaseExperiment
-from models.base_module import BaseModule
+
 
 
 class FusionExperiment(BaseExperiment):
-    def __init__(self, root: str, experiment_name:str, train_data, test_data, feature_extractors: ModuleList,
-                 pretrain_post_fusion_networks: ModuleList, epoch_count: int,
+    def __init__(self, root: str, experiment_name:str, train_data, test_data, prefusion: ModuleList,
+                 pretrain_ends: ModuleList, epoch_count: int,
                  optimizers, pretrain_epoch, batch_size, number_of_runs:int = 1):
+        '''
+
+        :param root: str stores root directory for saveing of modules
+        :param experiment_name: str name of experiment
+        :param train_data: data loader that holds train data. See  #todo insert file with dataloader documentation
+        :param test_data:  data loader that holds test data.
+        :param prefusion: nn.ModuleList that holds all network responsible for the prefusion calculations
+        :param pretrain_ends: ModuleList storing the postfusion pairs for prefusion feature extractor. Used in Pretraining
+        :param epoch_count: Number of epochs in traininig
+        :param optimizers: List of Optimizers used in training
+        :param pretrain_epoch: Number of epochs in pretraining
+        :param batch_size: Batch size used in training
+        :param number_of_runs: Number of experimental trials
+        '''
+        super().__init__(root=root)
         self.train_data = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
         self.test_data = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False)
         self._epoch_count = epoch_count
         self._optimizers: List[Optimizer] = optimizers
-        self.feature_extractors = feature_extractors
-        self.pretrain_post_fusion_networks = pretrain_post_fusion_networks
+        self.prefusion = prefusion
+        self.pretrain_ends = pretrain_ends
         self.pretrain_epoch = pretrain_epoch
         self.experiment_name = experiment_name
         self.number_of_runs = number_of_runs
 
         # self.pretrain_networks = pretrain  _networks
-        super().__init__(root=root)
 
     def run(self, pretrain: bool, train_data=None, test_data=None, ):
         accuracy_list = []
@@ -48,7 +62,7 @@ class FusionExperiment(BaseExperiment):
         for epoch in range(self.pretrain_epoch):
             for batch_data in train_data:
                 self.do_batch_work(batch_data=batch_data, pretrain=True)
-        return self.get_best_pretrained_network(test_data)
+        return self.get_best_pretrained_network(train_data)
 
     def do_batch_work(self, batch_data, pretrain=False):
         for optimizer in self._optimizers: optimizer.zero_grad()
@@ -58,14 +72,14 @@ class FusionExperiment(BaseExperiment):
             self.pretrain_calculate_gradients(batch_data)
 
     def get_best_pretrained_network(self, test_data):
-        correct_list = 0 * len(self.pretrain_post_fusion_networks)
+        correct_list = 0 * len(self.pretrain_ends)
         for batch_data in test_data:
             temp_correct_list = [
-                self.feature_extractors[i](self.pretrain_post_fusion_networks[i](batch_data[0][i])) == batch_data[1] for
-                i in range(len(self.pretrain_post_fusion_networks))]
+                self.prefusion[i](self.pretrain_ends[i](batch_data[0][i])) == batch_data[1] for
+                i in range(len(self.pretrain_ends))]
             correct_list = [sum(x) for x in
                             zip(correct_list, temp_correct_list)]  # slow. A faster way is uses operator import add
-        self.save(self.pretrain_post_fusion_networks)
+        self.save(self.pretrain_ends)
         return correct_list.index(max(correct_list))
 
 

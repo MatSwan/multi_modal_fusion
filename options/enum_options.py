@@ -1,11 +1,11 @@
 from enum import Enum
 from torchvision import transforms
 from data.datasets.intel_scene_dataset import IntentSceneDataset
-from fusion_methods.full_connected_fusion import FullyConnectedFusion
+from fusion_methods.full_connected_fusion import FullyConnectedFusion, FullyConnectedFusionFactory
 
 
 class FusionOptions(Enum):
-    FULLYCONNECTED = FullyConnectedFusion
+    FULLYCONNECTED = FullyConnectedFusionFactory(pretrain=False, freeze_features=False)
 
 
 

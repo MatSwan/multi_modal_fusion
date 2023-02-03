@@ -6,8 +6,8 @@ from torch import nn
 
 class BaseModule(nn.Module):
     def __init__(self, name: str):
-        self.__name = name
         super().__init__()
+        self.__name = name
 
     def get_name(self) -> str:
         return self.__name
