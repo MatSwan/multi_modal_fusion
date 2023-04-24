@@ -24,7 +24,8 @@ class Vgg16PreFusion(BaseModule):
                             self.norm(channel_size), self.activation()]
                     elif feature_number == feature - 1:
                         model += [
-                            nn.Conv2d(in_channels=previous_feature, out_channels=channel_size, kernel_size=3,
+                            nn.Conv2d(in_channels=channel_size
+                                      , out_channels=channel_size, kernel_size=3,
                                       padding=1),
                             self.norm(channel_size), self.activation(), pool(kernel_size=2, stride=2)]
 
@@ -50,8 +51,6 @@ class Vgg16PreFusion(BaseModule):
         return super().__call__(inputs)
 
     def forward(self, inputs: Tensor) -> Tensor:
-        if self.channel < self.max_channel:
-            inputs = inputs.expand(inputs.size()[0], self.max_image_channel, inputs.size()[2], inputs.size()[3])
         return torch.flatten(self.pre_fusion(inputs), 1)
 
 
@@ -67,7 +66,7 @@ class Vgg16PostFusion(BaseModule):
     def create_model(self, feature_list: List[int]) -> List[nn.Module]:
         model = []
         for in_feature, out_feature in zip(feature_list, feature_list[1:]):
-            model += [nn.Linear(in_feature, out_feature), self.activation()]
+            model += [nn.Linear(in_feature, out_feature)] #self.activation()]
         return model
 
     def __call__(self, inputs: Tensor) -> Tensor:

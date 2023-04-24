@@ -4,16 +4,20 @@ import torch
 from torch import nn, Tensor
 
 class FusionMethod(nn.Module):
-    def __init__(self):
+    def __init__(self, name):
         super().__init__()
+        self.__name = name
 
     def __call__(self, inputs: List[Tensor]) -> Tensor:
         return super().__call__(inputs)
 
+    def get_name(self):
+        return self.__name
+
 
 class FullyConnectedFusion(FusionMethod):
-    def __init__(self, number_of_modalities: int, vectorized_feature_length: int) -> None:
-        super().__init__()
+    def __init__(self, number_of_modalities: int, vectorized_feature_length: int, name: str) -> None:
+        super().__init__(name=name)
         self.model = nn.Sequential(self.create_fusion_layer(number_of_modalities=number_of_modalities,
                                                             vectorized_feature_length=vectorized_feature_length))
 
@@ -25,10 +29,10 @@ class FullyConnectedFusion(FusionMethod):
 
     def forward(self, inputs: List[Tensor]) -> Tensor:
         inputs = torch.cat(tuple(inputs), dim=1)
-        return self.models(inputs)
+        return self.model(inputs)
 
 
-class FullyConnectedFusionFactory:
+class FullyConnectedFusionFactory():
     "Factories server as a namespace for pretrain options and when called will return an instance of the approeriate fusion method"
     def __init__(self, pretrain:bool = False, pretrain_epoch:int = 0, freeze_features: bool = False ) -> None:
         self.pretrain = pretrain
@@ -36,10 +40,12 @@ class FullyConnectedFusionFactory:
         if not self.pretrain:
             self.pretrain_epoch = 0
         else: self.pretrain_epoch = pretrain_epoch
-        self.name = f'fc_fusion_pt{pretrain}'
+        self.__name = f'fc_fusion_pt{pretrain}'
 
 
     def __call__(self, number_of_modalities: int , vectorized_feature_length:int) -> FullyConnectedFusion:
-        return FullyConnectedFusion(number_of_modalities=number_of_modalities, vectorized_feature_length=vectorized_feature_length)
+        return FullyConnectedFusion(number_of_modalities=number_of_modalities, vectorized_feature_length=vectorized_feature_length, name=self.__name)
 
 
+    def get_name(self):
+        return self.__name
